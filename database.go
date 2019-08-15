@@ -155,7 +155,7 @@ func (database *Database) ReportNodeStatus() error {
 	}
 
 	proc := exec.Command("cat", "/proc/loadavg")
-	err = proc.Run()
+	err = proc.Wait()
 	if err != nil {
 		return err
 	}
