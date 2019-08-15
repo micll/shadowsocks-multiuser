@@ -4,5 +4,5 @@ go:
 - 1.x
 install:
 - go get -u -v ./...
-- go get -u -v github.com/StackExchange/wmi
-- go get -u -v github.com/shirou/w32
+- GOOS=windows GOARCH=amd64 go get -u -v github.com/StackExchange/wmi
+- GOOS=windows GOARCH=amd64 go get -u -v github.com/shirou/w32
