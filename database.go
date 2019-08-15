@@ -173,7 +173,7 @@ func (database *Database) UpdateBandwidth(instance *Instance) error {
 
 	cloudUpload += userUpload
 	cloudDownload += userDownload
-	_, err = database.Connection.Query(fmt.Sprintf("UPDATE user SET u=%d, d`=%d, t=%d WHERE id=%d", cloudUpload, cloudDownload, time.Now().Unix(), instance.UserID))
+	_, err = database.Connection.Query(fmt.Sprintf("UPDATE user SET u=%d, d=%d, t=%d WHERE id=%d", cloudUpload, cloudDownload, time.Now().Unix(), instance.UserID))
 	return err
 }
 
