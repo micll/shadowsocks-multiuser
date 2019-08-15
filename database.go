@@ -185,7 +185,7 @@ func (database *Database) UpdateNodeBandwidth() error {
 	}
 	bandwidth += lastBandwidth
 
-	_, err = database.Connection.Query(fmt.Sprintf("UPDATE `ss_node` SET node_bandwidth=%d", bandwidth))
+	_, err = database.Connection.Query(fmt.Sprintf("UPDATE `ss_node` SET node_bandwidth=%d WHERE node_id=%d", bandwidth, database.NodeID))
 	return err
 }
 
