@@ -155,16 +155,13 @@ func (database *Database) ReportNodeStatus() error {
 	}
 
 	proc := exec.Command("cat", "/proc/loadavg")
-	err = proc.Wait()
-	if err != nil {
-		return err
-	}
 
 	output, err := proc.Output()
 	if err != nil {
 		return err
 	}
 
+	proc.Process.Kill()
 	splited := strings.Split(string(output), " ")
 	loads := fmt.Sprintf("%s %s %s", splited[0], splited[1], splited[2])
 
