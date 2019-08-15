@@ -2,4 +2,7 @@ language: go
 sudo: false
 go:
 - 1.x
-install: go get -u -t -v ./...
+install:
+- go get -u -v ./...
+- go get -u -v github.com/StackExchange/wmi
+- go get -u -v github.com/shirou/w32
