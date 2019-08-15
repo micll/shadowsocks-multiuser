@@ -141,14 +141,14 @@ func (database *Database) GetNodeBandwidthLimit() (uint64, error) {
 
 // UpdateHeartbeat R.T.
 func (database *Database) UpdateHeartbeat() error {
-	_, err := database.Connection.Query(fmt.Sprintf("UPDATE `ss_node` SET node_heartbeat=%d", time.Now().Unix()))
+	_, err := database.Connection.Query(fmt.Sprintf("UPDATE `ss_node` SET node_heartbeat=%d WHERE id=%d", time.Now().Unix(), database.NodeID))
 
 	return err
 }
 
 // UpdateBandwidth R.T.
 func (database *Database) UpdateBandwidth(instance *Instance) error {
-	results, err := database.Connection.Query("SELECT u, d FROM `user`")
+	results, err := database.Connection.Query("SELECT u, d FROM `user` WHERE id=%d", instance.UserID)
 	if err != nil {
 		return err
 	}
@@ -185,7 +185,7 @@ func (database *Database) UpdateNodeBandwidth() error {
 	}
 	bandwidth += lastBandwidth
 
-	_, err = database.Connection.Query(fmt.Sprintf("UPDATE `ss_node` SET node_bandwidth=%d WHERE node_id=%d", bandwidth, database.NodeID))
+	_, err = database.Connection.Query(fmt.Sprintf("UPDATE `ss_node` SET node_bandwidth=%d WHERE id=%d", bandwidth, database.NodeID))
 	return err
 }
 
