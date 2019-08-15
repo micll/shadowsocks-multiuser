@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"os/exec"
+	"strings"
 	"syscall"
 	"time"
 
@@ -152,7 +154,21 @@ func (database *Database) ReportNodeStatus() error {
 		return err
 	}
 
-	_, err = database.Connection.Query(fmt.Sprintf("INSERT INTO `ss_node_info` (`node_id`, `uptime`, `load`, `log_time`) VALUES (%d, %d, %d, %d)", flags.NodeID, info.Uptime, info.Loads[0], time.Now().Unix()))
+	proc := exec.Command("cat", "/proc/loadavg")
+	err = proc.Run()
+	if err != nil {
+		return err
+	}
+
+	output, err := proc.Output()
+	if err != nil {
+		return err
+	}
+
+	splited := strings.Split(string(output), " ")
+	loads := fmt.Sprintf("%s %s %s", splited[0], splited[1], splited[2])
+
+	_, err = database.Connection.Query(fmt.Sprintf("INSERT INTO `ss_node_info` (`node_id`, `uptime`, `load`, `log_time`) VALUES (%d, %d, %s, %d)", flags.NodeID, info.Uptime, loads, time.Now().Unix()))
 
 	return err
 }
