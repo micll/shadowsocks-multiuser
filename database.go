@@ -2,8 +2,8 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
-	"log"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -43,12 +43,6 @@ func (database *Database) Open() error {
 	}
 	database.Connection = db
 
-	rate, err := database.GetRate()
-	if err != nil {
-		return err
-	}
-
-	database.NodeRate = rate
 	return nil
 }
 
@@ -76,7 +70,7 @@ func (database *Database) GetRate() (float64, error) {
 		}
 	}
 
-	return rate, nil
+	return rate, errors.New("Node not found")
 }
 
 // GetUser R.T.
@@ -103,6 +97,46 @@ func (database *Database) GetUser() ([]User, error) {
 	return users[:count], nil
 }
 
+// GetNodeBandwidth R.T.
+func (database *Database) GetNodeBandwidth() (uint64, error) {
+	results, err := database.Connection.Query(fmt.Sprintf("SELECT node_bandwidth FROM ss_node WHERE id=%d", database.NodeID))
+	if err != nil {
+		return 0, err
+	}
+
+	var bandwidth uint64
+	if results.Next() {
+		err = results.Scan(&bandwidth)
+		if err != nil {
+			return 0, err
+		}
+
+		return bandwidth, err
+	}
+
+	return 0, errors.New("Node not found")
+}
+
+// GetNodeBandwidthLimit R.T.
+func (database *Database) GetNodeBandwidthLimit() (uint64, error) {
+	results, err := database.Connection.Query(fmt.Sprintf("SELECT node_bandwidth_limit FROM ss_node WHERE id=%d", database.NodeID))
+	if err != nil {
+		return 0, err
+	}
+
+	var bandwidth uint64
+	if results.Next() {
+		err = results.Scan(&bandwidth)
+		if err != nil {
+			return 0, err
+		}
+
+		return bandwidth, err
+	}
+
+	return 0, errors.New("Node not found")
+}
+
 // UpdateHeartbeat R.T.
 func (database *Database) UpdateHeartbeat() error {
 	_, err := database.Connection.Query(fmt.Sprintf("UPDATE `ss_node` SET node_heartbeat=%d", time.Now().Unix()))
@@ -112,8 +146,6 @@ func (database *Database) UpdateHeartbeat() error {
 
 // UpdateBandwidth R.T.
 func (database *Database) UpdateBandwidth(instance *Instance) error {
-	log.Printf("Reporting %d uploaded %d downloaded %d to database", instance.UserID, instance.Bandwidth.Upload, instance.Bandwidth.Download)
-
 	results, err := database.Connection.Query("SELECT u, d FROM `user`")
 	if err != nil {
 		return err
@@ -143,10 +175,20 @@ func (database *Database) UpdateBandwidth(instance *Instance) error {
 	return err
 }
 
-// ReportNodeStatus R.T.
-func (database *Database) ReportNodeStatus() error {
-	log.Println("Reporting node status")
+// UpdateNodeBandwidth R.T.
+func (database *Database) UpdateNodeBandwidth() error {
+	bandwidth, err := database.GetNodeBandwidth()
+	if err != nil {
+		return err
+	}
+	bandwidth += lastBandwidth
 
+	_, err = database.Connection.Query(fmt.Sprintf("UPDATE `ss_node` SET node_bandwidth=%d", bandwidth))
+	return err
+}
+
+// UpdateNodeStatus R.T.
+func (database *Database) UpdateNodeStatus() error {
 	uptime, err := host.Uptime()
 	if err != nil {
 		uptime = uint64(time.Now().Unix() - startTime)
@@ -164,9 +206,8 @@ func (database *Database) ReportNodeStatus() error {
 	return err
 }
 
-// ReportUserOnline R.T.
-func (database *Database) ReportUserOnline(online int) error {
-	log.Printf("Reporting online users: %d", online)
+// UpdateOnlineUserCount R.T.
+func (database *Database) UpdateOnlineUserCount(online int) error {
 	_, err := database.Connection.Query(fmt.Sprintf("INSERT INTO `ss_node_online_log` (`node_id`, `online_user`, `log_time`) VALUES (%d, %d, %d)", flags.NodeID, online, time.Now().Unix()))
 
 	return err
@@ -180,6 +221,7 @@ func newDatabase(host string, port int, user, pass, name string, id int) *Databa
 	database.DBPass = pass
 	database.DBName = name
 	database.NodeID = id
+	database.NodeRate = 1
 
 	return &database
 }

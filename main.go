@@ -22,6 +22,7 @@ var flags struct {
 }
 
 var startTime = time.Now().Unix()
+var lastBandwidth uint64
 
 func purge(instanceList map[int]*Instance, users []User) {
 	for _, instance := range instanceList {
@@ -41,7 +42,12 @@ func purge(instanceList map[int]*Instance, users []User) {
 }
 
 func report(instance *Instance, database *Database) {
+	log.Printf("Updating user %d uploaded %d downloaded %d to database", instance.UserID, instance.Bandwidth.Upload, instance.Bandwidth.Download)
+
 	if err := database.UpdateBandwidth(instance); err == nil {
+		lastBandwidth += instance.Bandwidth.Upload
+		lastBandwidth += instance.Bandwidth.Download
+
 		instance.Bandwidth.Reset()
 	} else {
 		log.Println(err)
@@ -117,20 +123,52 @@ func main() {
 			log.Println(err)
 			continue
 		}
-
 		defer database.Close()
+
+		log.Println("Get bandwidth total")
+		total, err := database.GetNodeBandwidth()
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		log.Println("Get bandwidth limit")
+		limit, err := database.GetNodeBandwidthLimit()
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		if total != 0 {
+			if limit < total {
+				purge(instanceList, make([]User, 0))
+				for k := range instanceList {
+					delete(instanceList, k)
+				}
+
+				log.Println("No more bandwidth left in this node")
+			}
+		}
+
+		log.Println("Get traffic rate")
+		rate, err := database.GetRate()
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		database.NodeRate = rate
 
 		log.Println("Update heartbeat")
 		database.UpdateHeartbeat()
 
-		log.Println("Get database users")
+		log.Println("Get users")
 		users, err := database.GetUser()
 		if err != nil {
 			log.Println(err)
 			continue
 		}
 
-		log.Println("Purge server users")
+		log.Println("Purge users")
 		purge(instanceList, users)
 
 		for _, user := range users {
@@ -147,7 +185,7 @@ func main() {
 					delete(instanceList, user.Port)
 				}
 			} else if user.TransferEnable > user.Upload+user.Download {
-				log.Printf("Starting new instance for %d", user.ID)
+				log.Printf("Starting new instance for user %d", user.ID)
 				instance := newInstance(user.ID, user.Port, user.Method, user.Password)
 				instance.Start()
 
@@ -167,12 +205,22 @@ func main() {
 			}
 		}
 
-		err = database.ReportNodeStatus()
+		log.Println("Updating node bandwidth")
+		err = database.UpdateNodeBandwidth()
+		if err != nil {
+			log.Println()
+		} else {
+			lastBandwidth = 0
+		}
+
+		log.Println("Updating node status")
+		err = database.UpdateNodeStatus()
 		if err != nil {
 			log.Println(err)
 		}
 
-		err = database.ReportUserOnline(online)
+		log.Printf("Updating online users count: %d", online)
+		err = database.UpdateOnlineUserCount(online)
 		if err != nil {
 			log.Println(err)
 		}
