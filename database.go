@@ -165,7 +165,7 @@ func (database *Database) ReportNodeStatus() error {
 	splited := strings.Split(string(output), " ")
 	loads := fmt.Sprintf("%s %s %s", splited[0], splited[1], splited[2])
 
-	_, err = database.Connection.Query(fmt.Sprintf("INSERT INTO `ss_node_info` (`node_id`, `uptime`, `load`, `log_time`) VALUES (%d, %d, %s, %d)", flags.NodeID, info.Uptime, loads, time.Now().Unix()))
+	_, err = database.Connection.Query(fmt.Sprintf("INSERT INTO `ss_node_info` (`node_id`, `uptime`, `load`, `log_time`) VALUES (%d, %d, \"%s\", %d)", flags.NodeID, info.Uptime, loads, time.Now().Unix()))
 
 	return err
 }
