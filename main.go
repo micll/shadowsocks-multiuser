@@ -172,8 +172,12 @@ func main() {
 		purge(instanceList, users)
 
 		for _, user := range users {
-			log.Println(user)
 			if instance, ok := instanceList[user.Port]; ok {
+				if instance.UserID != user.ID {
+					log.Printf("User %d's port is already used", user.ID)
+					continue
+				}
+
 				if user.TransferEnable > user.Upload+user.Download {
 					update(instance, user.Method, user.Password)
 				} else {
