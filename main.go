@@ -165,6 +165,11 @@ func main() {
 			}
 		}
 
+		err = database.ReportNodeStatus()
+		if err != nil {
+			log.Println(err)
+		}
+
 		err = database.ReportUserOnline(online)
 		if err != nil {
 			log.Println(err)

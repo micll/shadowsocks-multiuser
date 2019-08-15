@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"syscall"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -138,6 +139,21 @@ func (database *Database) UpdateBandwidth(instance *Instance) error {
 	cloudUpload += userUpload
 	cloudDownload += userDownload
 	_, err = database.Connection.Query(fmt.Sprintf("UPDATE user SET u=%d, d=%d, t=%d WHERE id=%d", cloudUpload, cloudDownload, time.Now().Unix(), instance.UserID))
+	return err
+}
+
+// ReportNodeStatus R.T.
+func (database *Database) ReportNodeStatus() error {
+	log.Println("Reporting node status")
+
+	info := syscall.Sysinfo_t{}
+	err := syscall.Sysinfo(&info)
+	if err != nil {
+		return err
+	}
+
+	_, err = database.Connection.Query(fmt.Sprintf("INSERT INTO ss_node_info (node_id, uptime, load, log_time) VALUES (%d, %d, %d, %d)", flags.NodeID, info.Uptime, info.Loads[0], time.Now().Unix()))
+
 	return err
 }
 
