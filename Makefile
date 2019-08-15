@@ -1,6 +1,6 @@
 NAME=shadowsocks-multiuser
 BINDIR=bin
-GOBUILD=CGO_ENABLED=0 go build -ldflags '-w -s'
+GOBUILD=go build -ldflags '-w -s'
 
 all: linux macos win64
 
