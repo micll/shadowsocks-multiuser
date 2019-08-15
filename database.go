@@ -4,12 +4,11 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"os/exec"
-	"strings"
-	"syscall"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/shirou/gopsutil/host"
+	"github.com/shirou/gopsutil/load"
 )
 
 // Database struct
@@ -148,24 +147,19 @@ func (database *Database) UpdateBandwidth(instance *Instance) error {
 func (database *Database) ReportNodeStatus() error {
 	log.Println("Reporting node status")
 
-	info := syscall.Sysinfo_t{}
-	err := syscall.Sysinfo(&info)
+	uptime, err := host.Uptime()
 	if err != nil {
-		return err
+		uptime = uint64(time.Now().Unix() - startTime)
 	}
 
-	proc := exec.Command("cat", "/proc/loadavg")
-
-	output, err := proc.Output()
+	var avgstr string
+	avgstat, err := load.Avg()
 	if err != nil {
-		return err
+		avgstr = "0.00 0.00 0.00"
 	}
+	avgstr = fmt.Sprintf("%.2f %.2f %.2f", avgstat.Load1, avgstat.Load5, avgstat.Load15)
 
-	proc.Process.Kill()
-	splited := strings.Split(string(output), " ")
-	loads := fmt.Sprintf("%s %s %s", splited[0], splited[1], splited[2])
-
-	_, err = database.Connection.Query(fmt.Sprintf("INSERT INTO `ss_node_info` (`node_id`, `uptime`, `load`, `log_time`) VALUES (%d, %d, \"%s\", %d)", flags.NodeID, info.Uptime, loads, time.Now().Unix()))
+	_, err = database.Connection.Query(fmt.Sprintf("INSERT INTO `ss_node_info` (`node_id`, `uptime`, `load`, `log_time`) VALUES (%d, %d, \"%s\", %d)", flags.NodeID, uptime, avgstr, time.Now().Unix()))
 
 	return err
 }

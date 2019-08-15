@@ -21,6 +21,8 @@ var flags struct {
 	SyncInterval int
 }
 
+var startTime = time.Now().Unix()
+
 func purge(instanceList map[int]*Instance, users []User) {
 	for _, instance := range instanceList {
 		contains := false
