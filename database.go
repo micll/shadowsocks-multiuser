@@ -55,22 +55,24 @@ func (database *Database) Close() error {
 	return nil
 }
 
-// GetRate R.T.
-func (database *Database) GetRate() (float64, error) {
+// GetBandwidthRate R.T.
+func (database *Database) GetBandwidthRate() (float64, error) {
 	results, err := database.Connection.Query(fmt.Sprintf("SELECT traffic_rate FROM ss_node WHERE id=%d", database.NodeID))
 	if err != nil {
 		return -1, err
 	}
 
-	rate := float64(-1)
+	var rate float64
 	if results.Next() {
 		err = results.Scan(&rate)
 		if err != nil {
 			return -1, err
 		}
+
+		return rate, nil
 	}
 
-	return rate, errors.New("Node not found")
+	return -1, errors.New("Node not found")
 }
 
 // GetUser R.T.

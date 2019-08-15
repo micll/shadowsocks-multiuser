@@ -150,8 +150,8 @@ func main() {
 			}
 		}
 
-		log.Println("Get traffic rate")
-		rate, err := database.GetRate()
+		log.Println("Get bandwidth rate")
+		rate, err := database.GetBandwidthRate()
 		if err != nil {
 			log.Println(err)
 			continue
