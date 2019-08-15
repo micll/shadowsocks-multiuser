@@ -104,7 +104,7 @@ func (database *Database) GetUser() ([]User, error) {
 
 // UpdateHeartbeat R.T.
 func (database *Database) UpdateHeartbeat() error {
-	_, err := database.Connection.Query(fmt.Sprintf("UPDATE ss_node SET node_heartbeat=%d", time.Now().Unix()))
+	_, err := database.Connection.Query(fmt.Sprintf("UPDATE `ss_node` SET node_heartbeat=%d", time.Now().Unix()))
 
 	return err
 }
@@ -113,7 +113,7 @@ func (database *Database) UpdateHeartbeat() error {
 func (database *Database) UpdateBandwidth(instance *Instance) error {
 	log.Printf("Reporting %d uploaded %d downloaded %d to database", instance.UserID, instance.Bandwidth.Upload, instance.Bandwidth.Download)
 
-	results, err := database.Connection.Query("SELECT u, d FROM user")
+	results, err := database.Connection.Query("SELECT u, d FROM `user`")
 	if err != nil {
 		return err
 	}
@@ -131,14 +131,14 @@ func (database *Database) UpdateBandwidth(instance *Instance) error {
 	userUpload := uint64(float64(instance.Bandwidth.Upload) * database.NodeRate)
 	userDownload := uint64(float64(instance.Bandwidth.Download) * database.NodeRate)
 
-	_, err = database.Connection.Query(fmt.Sprintf("INSERT INTO user_traffic_log (user_id, u, d, node_id, rate, traffic, log_time) VALUES (%d, %d, %d, %d, %f, %d, %d)", instance.UserID, userUpload, userDownload, database.NodeID, database.NodeRate, userUpload+userDownload, time.Now().Unix()))
+	_, err = database.Connection.Query(fmt.Sprintf("INSERT INTO `user_traffic_log` (`user_id`, `u`, `d`, `node_id`, `rate`, `traffic`, `log_time`) VALUES (%d, %d, %d, %d, %f, %d, %d)", instance.UserID, userUpload, userDownload, database.NodeID, database.NodeRate, userUpload+userDownload, time.Now().Unix()))
 	if err != nil {
 		return err
 	}
 
 	cloudUpload += userUpload
 	cloudDownload += userDownload
-	_, err = database.Connection.Query(fmt.Sprintf("UPDATE user SET u=%d, d=%d, t=%d WHERE id=%d", cloudUpload, cloudDownload, time.Now().Unix(), instance.UserID))
+	_, err = database.Connection.Query(fmt.Sprintf("UPDATE user SET u=%d, d`=%d, t=%d WHERE id=%d", cloudUpload, cloudDownload, time.Now().Unix(), instance.UserID))
 	return err
 }
 
@@ -152,7 +152,7 @@ func (database *Database) ReportNodeStatus() error {
 		return err
 	}
 
-	_, err = database.Connection.Query(fmt.Sprintf("INSERT INTO ss_node_info (node_id, uptime, load, log_time) VALUES (%d, %d, %d, %d)", flags.NodeID, info.Uptime, info.Loads[0], time.Now().Unix()))
+	_, err = database.Connection.Query(fmt.Sprintf("INSERT INTO `ss_node_info` (`node_id`, `uptime`, `load`, `log_time`) VALUES (%d, %d, %d, %d)", flags.NodeID, info.Uptime, info.Loads[0], time.Now().Unix()))
 
 	return err
 }
@@ -160,7 +160,7 @@ func (database *Database) ReportNodeStatus() error {
 // ReportUserOnline R.T.
 func (database *Database) ReportUserOnline(online int) error {
 	log.Printf("Reporting online users: %d", online)
-	_, err := database.Connection.Query(fmt.Sprintf("INSERT INTO ss_node_online_log (node_id, online_user, log_time) VALUES (%d, %d, %d)", flags.NodeID, online, time.Now().Unix()))
+	_, err := database.Connection.Query(fmt.Sprintf("INSERT INTO `ss_node_online_log` (`node_id`, `online_user`, `log_time`) VALUES (%d, %d, %d)", flags.NodeID, online, time.Now().Unix()))
 
 	return err
 }
