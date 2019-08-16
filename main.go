@@ -160,7 +160,10 @@ func main() {
 		database.NodeRate = rate
 
 		log.Println("Update heartbeat")
-		database.UpdateHeartbeat()
+		err = database.UpdateHeartbeat()
+		if err != nil {
+			log.Println(err)
+		}
 
 		log.Println("Get users")
 		users, err := database.GetUser()
