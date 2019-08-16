@@ -139,7 +139,7 @@ func main() {
 			continue
 		}
 
-		if total != 0 {
+		if limit != 0 {
 			if limit < total {
 				purge(instanceList, make([]User, 0))
 				for k := range instanceList {
