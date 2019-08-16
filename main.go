@@ -147,6 +147,7 @@ func main() {
 				}
 
 				log.Println("No more bandwidth left in this node")
+				continue
 			}
 		}
 
